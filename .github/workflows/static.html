@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay Control</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif; /* Changed to Comic Sans MS */
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 10px;
+            padding: 2px; /* Smaller padding */
+            display: inline-block; /* Aligns the input groups to the left */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        input[type="number"], input[type="text"], input[type="date"] {
+            padding: 8px;
+            margin: 4px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: calc(100% - 18px); /* Adjusted width for input fields */
+        }
+        input[type="text"].expenseReason {
+            width: calc(50% - 5px); /* Shortened width for expense input */
+        }
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        .summary {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .summary h2 {
+            margin-top: 0;
+        }
+        .totalPay {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .checked {
+            text-decoration: line-through;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Pay Control Dashboard</h1>
+	<br><br><br>
+
+    <form id="payForm">
+        <div class="input-group">
+            <label for="payAmountInput">Pay Amount: $</label>
+            <input type="number" id="payAmountInput" value="800" onchange="updatePayAmount()">
+        </div>
+        <div class="input-group">
+            <label for="payStartDate">Pay Period Start Date:</label>
+            <input type="date" id="payStartDate" value="2024-10-04" onchange="populatePayPeriod()">
+        </div>
+
+        <table>
+            <tr>
+                <th>Pay Period</th>
+                <th>Total Pay</th>
+                <th>Expense Amount</th>
+                <th>Expense</th>
+            </tr>
+            <tr>
+                <td><input type="text" id="payPeriod1" readonly></td>
+                <td>
+                    <input type="number" name="additionalPay1" placeholder="Additional Pay" onchange="calculateSummary()">
+                    <p id="totalPay1" class="totalPay">Total Pay: $0.00</p>
+                    <p id="totalExpenses1" class="totalPay">Total Expenses: $0.00</p>
+                    <p id="remainder1" class="totalPay">Remainder: $0.00</p>
+                </td>
+                <td>
+                    <input type="number" name="expense1-1" placeholder="Amount 1" required onchange="calculateSummary()"><br>
+                    <input type="number" name="expense1-2" placeholder="Amount 2" onchange="calculateSummary()"><br>
+                </td>
+                <td>
+                    <label>
+                        <input type="text" class="expenseReason" id="reason1-1" placeholder="Expense 1">
+                        <input type="checkbox" name="expenseHandled1-1" onclick="toggleExpense(this)"> 
+                    </label><br>
+                    <label>
+                        <input type="text" class="expenseReason" id="reason1-2" placeholder="Expense 2">
+                        <input type="checkbox" name="expenseHandled1-2" onclick="toggleExpense(this)"> 
+                    </label><br>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1"></td>
+                <td colspan="3"></td>
+            </tr>
+        </table>
+    </form>
+
+    <div class="summary">
+        <h2>Overall Summary</h2>
+        <p id="totalPay">Total Pay Amount: $0</p>
+        <p id="totalExpenses">Total Expenses: $0</p>
+        <p id="remainder">Remainder: $0</p>
+    </div>
+
+    <script>
+        function populatePayPeriod() {
+            const startDate = new Date(document.getElementById('payStartDate').value); 
+            const payPeriodInput = document.getElementById('payPeriod1');
+            const formattedDate = startDate.toISOString().split('T')[0]; 
+            if (payPeriodInput) {
+                payPeriodInput.value = formattedDate;
+            }
+        }
+
+        window.onload = populatePayPeriod;
+
+        function toggleExpense(checkbox) {
+            const reasonInput = checkbox.previousElementSibling;
+            if (checkbox.checked) {
+                reasonInput.classList.add('checked');
+            } else {
+                reasonInput.classList.remove('checked');
+            }
+        }
+
+        function updatePayAmount() {
+            calculateSummary(); // Recalculate summary whenever pay amount is updated
+        }
+
+        function calculateSummary() {
+            const fixedPay = parseFloat(document.getElementById('payAmountInput').value) || 0;
+            const additionalPay = parseFloat(document.querySelector('input[name="additionalPay1"]').value) || 0;
+            const totalPayForPeriod = fixedPay + additionalPay;
+
+            document.getElementById('totalPay1').textContent = `Total Pay: $${totalPayForPeriod.toFixed(2)}`;
+
+            let periodExpenses = 0;
+            const expenses = document.querySelectorAll('input[type="number"][name^="expense"]');
+            expenses.forEach(expense => {
+                periodExpenses += parseFloat(expense.value) || 0;
+            });
+
+            document.getElementById('totalExpenses1').textContent = `Total Expenses: $${periodExpenses.toFixed(2)}`;
+
+            const totalPay = totalPayForPeriod; // Overall total pay for all periods
+            const totalExpenses = periodExpenses; // Overall total expenses for all periods
+
+            document.getElementById('totalPay').textContent = 'Total Pay Amount: $' + totalPay.toFixed(2);
+            document.getElementById('totalExpenses').textContent = 'Total Expenses: $' + totalExpenses.toFixed(2);
+            document.getElementById('remainder').textContent = 'Remainder: $' + (totalPay - totalExpenses).toFixed(2);
+            document.getElementById('remainder1').textContent = `Remainder: $${(totalPayForPeriod - periodExpenses).toFixed(2)}`;
+        }
+    </script>
+
+</body>
+</html>
